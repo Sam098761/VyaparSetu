@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import './App.css'
 
 // ==========================================
+// CONFIGURATION
+// ==========================================
+const API_URL = 'https://vyaparsetu-jsu1.onrender.com';
+
+// ==========================================
 // TRANSLATION DICTIONARY
 // ==========================================
 const translations = {
@@ -105,7 +110,7 @@ function BuyerDashboard({ language, setLanguage }) {
   const t = translations[language];
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/stores').then(res => res.json()).then(data => setStores(data)).catch(err => console.error(err));
+    fetch(`${API_URL}/api/stores`).then(res => res.json()).then(data => setStores(data)).catch(err => console.error(err));
   }, [])
 
   const handleInquire = (item, store) => {
@@ -186,7 +191,7 @@ function HomeTab({ stores, onVisit }) {
 
 function StoreProfileScreen({ store, onBack, onInquire }) {
   const [shopItems, setShopItems] = useState([]);
-  useEffect(() => { fetch('http://localhost:5000/api/products').then(res => res.json()).then(data => setShopItems(data)); }, []);
+  useEffect(() => { fetch(`${API_URL}/api/products`).then(res => res.json()).then(data => setShopItems(data)); }, []);
   return (
     <div className="dashboard seller-bg">
       <div className="dash-header" style={{borderRadius: 0, paddingBottom: '15px'}}><button className="back-btn" onClick={onBack}>⬅</button><h2 style={{margin:0, marginLeft:'15px', color:'white'}}>{store.name}</h2></div>
@@ -203,7 +208,7 @@ function StoreProfileScreen({ store, onBack, onInquire }) {
   )
 }
 
-// FULL FEED RESTORED
+// FULL FEED
 function FeedTab({ language }) {
   const t = translations[language];
   return (
@@ -224,7 +229,7 @@ function FeedTab({ language }) {
   )
 }
 
-// FULL CHAT LIST RESTORED
+// CHAT LIST
 function ChatListTab({ onOpenChat, language }) {
   const t = translations[language];
   return (
@@ -244,7 +249,7 @@ function ChatListTab({ onOpenChat, language }) {
   )
 }
 
-// FULL CHAT THREAD RESTORED
+// CHAT THREAD
 function ChatThreadScreen({ user, onClose }) {
   const [messages, setMessages] = useState(
     user.initialMsg 
@@ -277,7 +282,7 @@ function ChatThreadScreen({ user, onClose }) {
   )
 }
 
-// FULL USER PROFILE
+// USER PROFILE
 function UserProfileTab({ language, setLanguage }) {
   const t = translations[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
@@ -312,9 +317,7 @@ function UserProfileTab({ language, setLanguage }) {
   )
 }
 
-// ==========================================
-// 2. SELLER DASHBOARD (FULL RESTORED)
-// ==========================================
+// SELLER DASHBOARD
 function SellerDashboard({ language, setLanguage }) {
   const [activeTab, setActiveTab] = useState('dash') 
   const [products, setProducts] = useState([]);
@@ -324,13 +327,13 @@ function SellerDashboard({ language, setLanguage }) {
   const t = translations[language];
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/products').then(res => res.json()).then(data => setProducts(data)).catch(err => console.error(err));
+    fetch(`${API_URL}/api/products`).then(res => res.json()).then(data => setProducts(data)).catch(err => console.error(err));
   }, []);
 
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!newItemName || !newItemPrice) return alert("Item Name and Price nakhva jaruri chhe!");
-    fetch('http://localhost:5000/api/products', {
+    fetch(`${API_URL}/api/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: newItemName, price: Number(newItemPrice) })
@@ -348,7 +351,6 @@ function SellerDashboard({ language, setLanguage }) {
       <div className="seller-top-bar"><h2 className="brand-title">VyaparSetu <span className="badge">Business</span></h2></div>
       <div className="dash-content">
         
-        {/* DASHBOARD STATS */}
         {activeTab === 'dash' && (
           <>
             <div className="stats-container">
@@ -362,7 +364,6 @@ function SellerDashboard({ language, setLanguage }) {
           </>
         )}
 
-        {/* CATALOG / LISTINGS */}
         {activeTab === 'catalog' && (
           <>
             <div className="feed-header"><h3 className="section-title">My Portfolio Listings</h3></div>
@@ -387,7 +388,6 @@ function SellerDashboard({ language, setLanguage }) {
           </>
         )}
 
-        {/* SELLER CHATS */}
         {activeTab === 'chat' && (
           <>
             <div className="feed-header"><h3 className="section-title">Lead Messages</h3></div>
@@ -399,7 +399,6 @@ function SellerDashboard({ language, setLanguage }) {
           </>
         )}
 
-        {/* SELLER PROFILE */}
         {activeTab === 'profile' && (
           <>
             <div className="feed-header"><h3 className="section-title">Business Profile</h3></div>
