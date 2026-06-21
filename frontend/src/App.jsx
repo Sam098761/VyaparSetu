@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react'
+import { SignInButton, UserButton, useUser, useClerk } from '@clerk/clerk-react'
 import './App.css'
 
-// ==========================================
-// CONFIGURATION
-// ==========================================
 const API_URL = 'https://vyaparsetu-jsu1.onrender.com';
 
-// ==========================================
-// TRANSLATION DICTIONARY
-// ==========================================
 const translations = {
   'English': { 
     welcome: 'Welcome to VyaparSetu', explore: 'Explore Services', listBiz: 'List My Business', 
@@ -30,18 +25,34 @@ const translations = {
 function App() {
   const [step, setStep] = useState('splash')
   const [appLanguage, setAppLanguage] = useState('English')
+  
+  // Clerk nu asali User object
+  const { isSignedIn, isLoaded } = useUser();
 
   useEffect(() => {
-    if (step === 'splash') {
-      setTimeout(() => setStep('onboarding'), 2500)
+    if (step === 'splash' && isLoaded) {
+      setTimeout(() => {
+        if (isSignedIn) {
+          setStep('role-select'); // Already login chhe to sidha andar!
+        } else {
+          setStep('onboarding');
+        }
+      }, 2500);
     }
-  }, [step])
+  }, [step, isSignedIn, isLoaded]);
+
+  useEffect(() => {
+    // Jo Modal mathi login thay to automatic aagal vadhe
+    if (isSignedIn && step === 'login') {
+      setStep('role-select');
+    }
+  }, [isSignedIn, step]);
 
   return (
     <div className="mobile-container">
       {step === 'splash' && <SplashScreen />}
       {step === 'onboarding' && <Onboarding onNext={() => setStep('login')} language={appLanguage} setLanguage={setAppLanguage} />}
-      {step === 'login' && <LoginScreen onLogin={() => setStep('role-select')} language={appLanguage} />}
+      {step === 'login' && <LoginScreen />}
       {step === 'role-select' && <RoleSelection onSelectRole={(role) => setStep(role === 'buyer' ? 'buyer-dashboard' : 'seller-dashboard')} language={appLanguage} />}
       {step === 'buyer-dashboard' && <BuyerDashboard language={appLanguage} setLanguage={setAppLanguage} />}
       {step === 'seller-dashboard' && <SellerDashboard language={appLanguage} setLanguage={setAppLanguage} />}
@@ -76,14 +87,18 @@ function Onboarding({ onNext, language, setLanguage }) {
   )
 }
 
-function LoginScreen({ onLogin }) {
+// REAL CLERK LOGIN SCREEN
+function LoginScreen() {
   return (
     <div className="screen center-content">
       <h2 className="title">Login / Sign Up</h2>
-      <button className="btn-google" onClick={onLogin}>🌐 Continue with Google</button>
-      <div className="divider">OR</div>
-      <input type="tel" placeholder="Enter Mobile Number" className="input-box text-center" />
-      <button className="btn-primary mt-15" onClick={onLogin}>Get OTP</button>
+      <p style={{color: '#666', marginBottom: '30px'}}>Secure authentication</p>
+      
+      <SignInButton mode="modal">
+        <button className="btn-google" style={{fontSize: '1.1rem', padding: '15px'}}>
+          🌐 Continue with Google / Email
+        </button>
+      </SignInButton>
     </div>
   )
 }
@@ -99,9 +114,6 @@ function RoleSelection({ onSelectRole, language }) {
   )
 }
 
-// ==========================================
-// 1. BUYER DASHBOARD 
-// ==========================================
 function BuyerDashboard({ language, setLanguage }) {
   const [activeTab, setActiveTab] = useState('home')
   const [activeChatUser, setActiveChatUser] = useState(null)
@@ -160,7 +172,7 @@ function HomeTab({ stores, onVisit }) {
   return (
     <>
       <div className="dash-header">
-        <div className="location-bar"><span className="loc-text">📍 Rajkot, Gujarat ▾</span><span className="profile-icon">👤</span></div>
+        <div className="location-bar"><span className="loc-text">📍 Rajkot, Gujarat ▾</span><UserButton /></div>
         <div className="search-bar-container"><input type="text" className="search-bar" placeholder="Search shops, flats, tutors..." value={searchText} onChange={(e) => setSearchText(e.target.value)} /></div>
       </div>
       <div className="dash-content">
@@ -208,7 +220,6 @@ function StoreProfileScreen({ store, onBack, onInquire }) {
   )
 }
 
-// FULL FEED
 function FeedTab({ language }) {
   const t = translations[language];
   return (
@@ -216,20 +227,14 @@ function FeedTab({ language }) {
       <div className="dash-header"><h2 className="brand-title" style={{color: 'white', margin: 0}}>{t.feed} / Updates</h2></div>
       <div className="dash-content feed-bg">
         <div className="post-card">
-          <div className="post-header">
-            <div className="post-avatar health-avatar">🏥</div>
-            <div className="post-meta"><h4>Dr. Khengar Pandya Clinic</h4><p>2 hours ago</p></div>
-          </div>
-          <div className="post-body">
-            <p>Free General Health Checkup camp this Sunday! Direct message us to book your slot.</p>
-          </div>
+          <div className="post-header"><div className="post-avatar health-avatar">🏥</div><div className="post-meta"><h4>Dr. Khengar Pandya Clinic</h4><p>2 hours ago</p></div></div>
+          <div className="post-body"><p>Free General Health Checkup camp this Sunday! Direct message us to book your slot.</p></div>
         </div>
       </div>
     </>
   )
 }
 
-// CHAT LIST
 function ChatListTab({ onOpenChat, language }) {
   const t = translations[language];
   return (
@@ -238,10 +243,7 @@ function ChatListTab({ onOpenChat, language }) {
       <div className="dash-content">
         <div className="chat-item unread" onClick={() => onOpenChat({name: 'Manoj Provisions', icon: '🏪', status: 'Online'})}>
           <div className="chat-avatar shop-avatar">🏪</div>
-          <div className="chat-details">
-            <h4 className="chat-name">Manoj Provisions</h4>
-            <p className="chat-msg">Ha bhai, tiffin chalu chhe atyare.</p>
-          </div>
+          <div className="chat-details"><h4 className="chat-name">Manoj Provisions</h4><p className="chat-msg">Ha bhai, tiffin chalu chhe atyare.</p></div>
           <div className="chat-meta"><span className="chat-time">New</span><span className="unread-dot">1</span></div>
         </div>
       </div>
@@ -249,29 +251,17 @@ function ChatListTab({ onOpenChat, language }) {
   )
 }
 
-// CHAT THREAD
 function ChatThreadScreen({ user, onClose }) {
-  const [messages, setMessages] = useState(
-    user.initialMsg 
-      ? [{ text: user.initialMsg, sender: 'me' }] 
-      : [{ text: "Ha bhai, boliye shu joiye chhe?", sender: 'them' }]
-  );
+  const [messages, setMessages] = useState(user.initialMsg ? [{ text: user.initialMsg, sender: 'me' }] : [{ text: "Ha bhai, boliye shu joiye chhe?", sender: 'them' }]);
   const [input, setInput] = useState('');
-
-  const sendMessage = () => {
-    if(!input) return;
-    setMessages([...messages, { text: input, sender: 'me' }]);
-    setInput('');
-  };
+  const sendMessage = () => { if(!input) return; setMessages([...messages, { text: input, sender: 'me' }]); setInput(''); };
 
   return (
     <div className="chat-screen-overlay">
       <div className="chat-thread-header"><button className="back-btn" onClick={onClose}>⬅</button><div><h4>{user.name}</h4><p style={{fontSize:'12px', margin:0}}>{user.status}</p></div></div>
       <div className="chat-thread-messages">
         {messages.map((msg, idx) => (
-          <div key={idx} className={`msg-wrapper ${msg.sender === 'me' ? 'msg-sent' : 'msg-received'}`}>
-            <div className="msg-bubble">{msg.text}</div>
-          </div>
+          <div key={idx} className={`msg-wrapper ${msg.sender === 'me' ? 'msg-sent' : 'msg-received'}`}><div className="msg-bubble">{msg.text}</div></div>
         ))}
       </div>
       <div className="chat-input-area">
@@ -282,10 +272,13 @@ function ChatThreadScreen({ user, onClose }) {
   )
 }
 
-// USER PROFILE
+// REAL USER PROFILE SECTION
 function UserProfileTab({ language, setLanguage }) {
   const t = translations[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
+  const { user } = useUser();
+  const { signOut } = useClerk();
+
   const toggleLanguage = () => {
     const langs = ['English', 'ગુજરાતી', 'हिन्दी'];
     setLanguage(langs[(langs.indexOf(language) + 1) % langs.length]);
@@ -296,10 +289,11 @@ function UserProfileTab({ language, setLanguage }) {
       <div className="dash-header"><h2 className="brand-title" style={{color: 'white', margin: 0}}>{t.profile}</h2></div>
       <div className="dash-content">
         <div className="clean-card mt-20" style={{textAlign: 'center', background: 'linear-gradient(to bottom, #e8f4f4, #ffffff)', border: 'none'}}>
-          <div style={{fontSize: '4rem', margin: '10px 0'}}>🧑‍🦱</div>
-          <h2 style={{margin: '0', color: '#008080'}}>Sarthak Parmar</h2>
-          <p style={{color: '#666', marginTop: '5px'}}>+91 98765 43210 • Rajkot</p>
-          <button className="btn-small mt-10" style={{background: '#333', color: 'white'}} onClick={() => alert("✏️ Edit Profile screen khulse")}>Edit Profile</button>
+          <div style={{margin: '10px 0', display: 'flex', justifyContent: 'center'}}>
+             <UserButton appearance={{ elements: { userButtonAvatarBox: { width: 80, height: 80 } } }} />
+          </div>
+          <h2 style={{margin: '0', color: '#008080'}}>{user?.fullName || 'VyaparSetu User'}</h2>
+          <p style={{color: '#666', marginTop: '5px'}}>{user?.primaryEmailAddress?.emailAddress}</p>
         </div>
         <h3 className="section-title mt-20">App Settings</h3>
         <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', cursor: 'pointer', background: '#fcfcfc'}} onClick={toggleLanguage}>
@@ -308,7 +302,7 @@ function UserProfileTab({ language, setLanguage }) {
         <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', cursor: 'pointer', background: '#fcfcfc', marginTop: '10px'}} onClick={() => setNotificationsOn(!notificationsOn)}>
           <h4 style={{margin: 0}}>🔔 Notifications</h4><span style={{color: notificationsOn ? '#008080' : '#888', fontWeight: 'bold'}}>{notificationsOn ? 'ON' : 'OFF'}</span>
         </div>
-        <div className="clean-card mt-20" onClick={() => window.location.reload()} style={{border: '1px solid #ff4444', background: '#ffeeee', cursor: 'pointer'}}>
+        <div className="clean-card mt-20" onClick={() => signOut(() => window.location.reload())} style={{border: '1px solid #ff4444', background: '#ffeeee', cursor: 'pointer'}}>
           <h4 style={{color: '#ff4444', textAlign: 'center', margin: 0}}>{t.logout}</h4>
         </div>
         <div className="spacer-bottom"></div>
@@ -317,7 +311,6 @@ function UserProfileTab({ language, setLanguage }) {
   )
 }
 
-// SELLER DASHBOARD
 function SellerDashboard({ language, setLanguage }) {
   const [activeTab, setActiveTab] = useState('dash') 
   const [products, setProducts] = useState([]);
@@ -325,6 +318,8 @@ function SellerDashboard({ language, setLanguage }) {
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
   const t = translations[language];
+  const { user } = useUser();
+  const { signOut } = useClerk();
 
   useEffect(() => {
     fetch(`${API_URL}/api/products`).then(res => res.json()).then(data => setProducts(data)).catch(err => console.error(err));
@@ -348,19 +343,13 @@ function SellerDashboard({ language, setLanguage }) {
 
   return (
     <div className="dashboard seller-bg">
-      <div className="seller-top-bar"><h2 className="brand-title">VyaparSetu <span className="badge">Business</span></h2></div>
+      <div className="seller-top-bar"><h2 className="brand-title">VyaparSetu <span className="badge">Business</span></h2><UserButton /></div>
       <div className="dash-content">
         
         {activeTab === 'dash' && (
           <>
-            <div className="stats-container">
-              <div className="stat-box"><h4>850</h4><p>Profile Views</p></div>
-              <div className="stat-box highlight"><h4>42</h4><p>New Leads</p></div>
-            </div>
-            <div className="clean-card mt-20" style={{background: '#f2fcfc', border: '1px dashed #008080'}}>
-              <h4 style={{color:'#008080'}}>Pending Chat Leads (2)</h4>
-              <p style={{fontSize:'0.9rem', color:'#555', marginTop:'5px'}}>2 customers are waiting for your reply.</p>
-            </div>
+            <div className="stats-container"><div className="stat-box"><h4>850</h4><p>Profile Views</p></div><div className="stat-box highlight"><h4>42</h4><p>New Leads</p></div></div>
+            <div className="clean-card mt-20" style={{background: '#f2fcfc', border: '1px dashed #008080'}}><h4 style={{color:'#008080'}}>Pending Chat Leads (2)</h4><p style={{fontSize:'0.9rem', color:'#555', marginTop:'5px'}}>2 customers are waiting for your reply.</p></div>
           </>
         )}
 
@@ -372,30 +361,17 @@ function SellerDashboard({ language, setLanguage }) {
                 <h4 style={{color: '#008080', marginBottom: '10px'}}>Add New Listing / Service</h4>
                 <input type="text" placeholder="e.g. 2BHK Flat / 10th Bio Coaching" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="input-box" style={{marginBottom: '10px'}} />
                 <input type="number" placeholder="Asking Price / Fees (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="input-box" />
-                <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}>
-                  <button className="btn-primary" onClick={handleAddItem} style={{flex: 1}}>Publish</button>
-                  <button className="btn-small" onClick={() => setShowAddForm(false)}>Cancel</button>
-                </div>
+                <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}><button className="btn-primary" onClick={handleAddItem} style={{flex: 1}}>Publish</button><button className="btn-small" onClick={() => setShowAddForm(false)}>Cancel</button></div>
               </div>
-            ) : (
-              <button className="btn-primary mb-20" onClick={() => setShowAddForm(true)}>➕ Add New Listing</button>
-            )}
-            {products.map(product => (
-              <div className="clean-card" key={product._id || product.id}>
-                <div className="card-left"><h4>{product.name}</h4><p className="price">₹{product.price}</p></div>
-              </div>
-            ))}
+            ) : (<button className="btn-primary mb-20" onClick={() => setShowAddForm(true)}>➕ Add New Listing</button>)}
+            {products.map(product => (<div className="clean-card" key={product._id || product.id}><div className="card-left"><h4>{product.name}</h4><p className="price">₹{product.price}</p></div></div>))}
           </>
         )}
 
         {activeTab === 'chat' && (
           <>
             <div className="feed-header"><h3 className="section-title">Lead Messages</h3></div>
-            <div className="chat-item unread">
-              <div className="chat-avatar" style={{background:'#e8f4fd'}}>👤</div>
-              <div className="chat-details"><h4 className="chat-name">Rahul Sharma</h4><p className="chat-msg">Hi, I want to inquire about the flat...</p></div>
-              <div className="chat-meta"><span className="chat-time">New</span><span className="unread-dot">1</span></div>
-            </div>
+            <div className="chat-item unread"><div className="chat-avatar" style={{background:'#e8f4fd'}}>👤</div><div className="chat-details"><h4 className="chat-name">Rahul Sharma</h4><p className="chat-msg">Hi, I want to inquire about the flat...</p></div><div className="chat-meta"><span className="chat-time">New</span><span className="unread-dot">1</span></div></div>
           </>
         )}
 
@@ -403,26 +379,19 @@ function SellerDashboard({ language, setLanguage }) {
           <>
             <div className="feed-header"><h3 className="section-title">Business Profile</h3></div>
             <div className="clean-card mt-10" style={{textAlign: 'center', background: '#f9fafa', border: '2px solid #008080'}}>
-              <div style={{fontSize: '4rem', margin: '10px 0'}}>🏪</div>
-              <h2 style={{margin: '0', color: '#008080'}}>Sarthak Services <span style={{fontSize:'1rem'}}>✅</span></h2>
-              <p style={{color: '#666', marginTop: '5px'}}>Real Estate & Education • Rajkot</p>
-              <button className="btn-small mt-10" style={{background: '#333', color: 'white'}} onClick={() => alert("✏️ Edit Business form khulse.")}>Edit Business Details</button>
+              <div style={{margin: '10px 0', display: 'flex', justifyContent: 'center'}}>
+                 <UserButton appearance={{ elements: { userButtonAvatarBox: { width: 80, height: 80 } } }} />
+              </div>
+              <h2 style={{margin: '0', color: '#008080'}}>{user?.fullName || 'Business User'} <span style={{fontSize:'1rem'}}>✅</span></h2>
+              <p style={{color: '#666', marginTop: '5px'}}>{user?.primaryEmailAddress?.emailAddress}</p>
             </div>
             <h3 className="section-title mt-20">Account Settings</h3>
-            <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <div><h4 style={{margin: 0}}>🚀 Subscription</h4><p style={{margin: 0, fontSize: '0.8rem', color: '#888'}}>Free Plan</p></div>
-              <button className="btn-small" style={{background: '#ff9800', color: 'white', border: 'none'}}>Upgrade</button>
-            </div>
-            <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-              <div><h4 style={{margin: 0}}>🕒 Business Hours</h4><p style={{margin: 0, fontSize: '0.8rem', color: '#888'}}>9:00 AM - 8:00 PM</p></div>
-              <button className="btn-small">Edit</button>
-            </div>
-            <div className="clean-card mt-20" onClick={() => window.location.reload()} style={{border: '1px solid #ff4444', background: '#ffeeee', cursor: 'pointer'}}>
+            <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}><div><h4 style={{margin: 0}}>🚀 Subscription</h4><p style={{margin: 0, fontSize: '0.8rem', color: '#888'}}>Free Plan</p></div><button className="btn-small" style={{background: '#ff9800', color: 'white', border: 'none'}}>Upgrade</button></div>
+            <div className="clean-card mt-20" onClick={() => signOut(() => window.location.reload())} style={{border: '1px solid #ff4444', background: '#ffeeee', cursor: 'pointer'}}>
               <h4 style={{color: '#ff4444', textAlign: 'center', margin: 0}}>{t.logout}</h4>
             </div>
           </>
         )}
-        
         <div className="spacer-bottom"></div>
       </div>
 
