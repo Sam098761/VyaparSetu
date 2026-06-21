@@ -7,14 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 }).then(() => console.log("MongoDB Connected Successfully!"))
   .catch(err => console.log("MongoDB Connection Error: ", err));
 
-// 1. Product Schema (Junu ane Majbut)
 const productSchema = new mongoose.Schema({
     name: String,
     price: Number,
@@ -23,7 +21,6 @@ const productSchema = new mongoose.Schema({
 });
 const Product = mongoose.model('Product', productSchema);
 
-// 2. NAVI CHAT SCHEMA (Asali Messaging mate) 🚀
 const messageSchema = new mongoose.Schema({
     senderId: String,
     senderName: String,
@@ -33,18 +30,14 @@ const messageSchema = new mongoose.Schema({
 });
 const Message = mongoose.model('Message', messageSchema);
 
-// --- API ROUTES ---
-
-// Homepage mate Local Stores
 app.get('/api/stores', (req, res) => {
     res.json([
-        { id: "store_1", name: "Sarthak Tutors", type: "Education", distance: "1.2 km", ownerId: "user_2iX" }, // Aapne aagal jata aane pan asali karishu
+        { id: "store_1", name: "Sarthak Tutors", type: "Education", distance: "1.2 km", ownerId: "user_2iX" },
         { id: "store_2", name: "Dr. Khengar Pandya Clinic", type: "Health", distance: "2.5 km", ownerId: "user_2iY" },
         { id: "store_3", name: "Sarthak Real Estate", type: "Real Estate", distance: "3.0 km", ownerId: "user_2iZ" }
     ]);
 });
 
-// Products Gotva mate
 app.get('/api/products', async (req, res) => {
     try {
         const products = await Product.find();
@@ -74,9 +67,6 @@ app.post('/api/products', async (req, res) => {
     }
 });
 
-// --- NAVA CHAT API ROUTES ---
-
-// 1. Navo Message moklava mate (Send)
 app.post('/api/messages', async (req, res) => {
     try {
         const { senderId, senderName, receiverId, text } = req.body;
@@ -88,7 +78,6 @@ app.post('/api/messages', async (req, res) => {
     }
 });
 
-// 2. Chat history jova mate (Buyer ane Seller vacche ni vaato)
 app.get('/api/messages/:user1/:user2', async (req, res) => {
     try {
         const { user1, user2 } = req.params;
@@ -97,20 +86,16 @@ app.get('/api/messages/:user1/:user2', async (req, res) => {
                 { senderId: user1, receiverId: user2 },
                 { senderId: user2, receiverId: user1 }
             ]
-        }).sort('timestamp'); // Juna message upar, nava niche
+        }).sort('timestamp');
         res.json(messages);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 3. Seller ne aaveli badhi Leads (Chats no list) gotva mate
 app.get('/api/chats/:userId', async (req, res) => {
     try {
-        // Find all messages where this user is the receiver
         const messages = await Message.find({ receiverId: req.params.userId }).sort('-timestamp');
-        
-        // Filter unique senders (ek na ek manas na 10 message hoy to list ma ek j vaar naam aavvu joiye)
         const uniqueSenders = [];
         const map = new Map();
         for (const msg of messages) {
