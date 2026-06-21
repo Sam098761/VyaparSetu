@@ -140,7 +140,6 @@ function HomeTab({ stores, onVisit, userLocation, setUserLocation }) {
   const [searchText, setSearchText] = useState('')
   const [activeCategory, setActiveCategory] = useState('All') 
   
-  // Modal States
   const [showLocModal, setShowLocModal] = useState(false);
   const [citySearch, setCitySearch] = useState('');
 
@@ -159,29 +158,16 @@ function HomeTab({ stores, onVisit, userLocation, setUserLocation }) {
 
   return (
     <>
-      {/* City Selection Modal / Popup */}
       {showLocModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,128,128,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', padding: '20px', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', marginTop: '20px' }}>
             <h2 style={{ margin: 0, color: 'white' }}>Select City</h2>
             <button onClick={() => setShowLocModal(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem' }}>✖</button>
           </div>
-          <input 
-            type="text" 
-            className="input-box" 
-            placeholder="Type your city name..." 
-            value={citySearch} 
-            onChange={(e) => setCitySearch(e.target.value)} 
-            style={{ marginBottom: '15px' }}
-            autoFocus
-          />
+          <input type="text" className="input-box" placeholder="Type your city name..." value={citySearch} onChange={(e) => setCitySearch(e.target.value)} style={{ marginBottom: '15px' }} autoFocus />
           <div style={{ background: 'white', borderRadius: '12px', flex: 1, overflowY: 'auto', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
             {filteredCities.map(city => (
-              <div 
-                key={city} 
-                onClick={() => { setUserLocation(city); setShowLocModal(false); setCitySearch(''); }}
-                style={{ padding: '15px 20px', borderBottom: '1px solid #eee', cursor: 'pointer', fontSize: '1.1rem', color: '#333' }}
-              >
+              <div key={city} onClick={() => { setUserLocation(city); setShowLocModal(false); setCitySearch(''); }} style={{ padding: '15px 20px', borderBottom: '1px solid #eee', cursor: 'pointer', fontSize: '1.1rem', color: '#333' }}>
                 📍 {city}
               </div>
             ))}
@@ -341,20 +327,36 @@ function SellerDashboard({ language, setLanguage }) {
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
   const t = translations[language];
+  
+  // 🔐 User Data from Clerk
   const { user } = useUser();
   const { signOut } = useClerk();
 
+  // 📥 Fetch ONLY this seller's products using their Clerk ID
   useEffect(() => {
-    fetch(`${API_URL}/api/products`).then(res => res.json()).then(data => setProducts(data)).catch(err => console.error(err));
-  }, []);
+    if (user) {
+      fetch(`${API_URL}/api/products/seller/${user.id}`)
+        .then(res => res.json())
+        .then(data => setProducts(data))
+        .catch(err => console.error(err));
+    }
+  }, [user]);
 
+  // 📤 Add Product with Clerk ID attached
   const handleAddItem = (e) => {
     e.preventDefault();
     if (!newItemName || !newItemPrice) return alert("Item Name and Price nakhva jaruri chhe!");
+    if (!user) return alert("User Load thai rahyo chhe, 1 second wait karo...");
+
     fetch(`${API_URL}/api/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newItemName, price: Number(newItemPrice) })
+      body: JSON.stringify({ 
+        name: newItemName, 
+        price: Number(newItemPrice),
+        sellerId: user.id,                      // ⬅️ Clerk ID
+        sellerName: user.fullName || "Seller"   // ⬅️ Clerk Name
+      })
     })
     .then(res => res.json())
     .then(data => {
