@@ -4,48 +4,46 @@ import './App.css'
 
 const API_URL = 'https://vyaparsetu-jsu1.onrender.com';
 
+// 📍 All Over India Major Cities List
+const INDIA_CITIES = [
+  "Agra, UP", "Ahmedabad, Gujarat", "Amritsar, Punjab", "Bangalore, Karnataka",
+  "Bhavnagar, Gujarat", "Bhopal, MP", "Bhubaneswar, Odisha", "Chandigarh",
+  "Chennai, Tamil Nadu", "Coimbatore, Tamil Nadu", "Dehradun, Uttarakhand",
+  "Delhi, NCR", "Faridabad, Haryana", "Gandhinagar, Gujarat", "Ghaziabad, UP",
+  "Gurgaon, Haryana", "Guwahati, Assam", "Gwalior, MP", "Hyderabad, Telangana",
+  "Indore, MP", "Jabalpur, MP", "Jaipur, Rajasthan", "Jalandhar, Punjab",
+  "Jamnagar, Gujarat", "Jamshedpur, Jharkhand", "Jodhpur, Rajasthan",
+  "Junagadh, Gujarat", "Kanpur, UP", "Kochi, Kerala", "Kolkata, West Bengal",
+  "Lucknow, UP", "Ludhiana, Punjab", "Madurai, Tamil Nadu", "Meerut, UP",
+  "Mumbai, Maharashtra", "Mysore, Karnataka", "Nagpur, Maharashtra",
+  "Nashik, Maharashtra", "Noida, UP", "Patna, Bihar", "Pune, Maharashtra",
+  "Raipur, Chhattisgarh", "Rajkot, Gujarat", "Ranchi, Jharkhand",
+  "Surat, Gujarat", "Thane, Maharashtra", "Thiruvananthapuram, Kerala",
+  "Vadodara, Gujarat", "Varanasi, UP", "Vijayawada, AP", "Visakhapatnam, AP"
+];
+
 const translations = {
-  'English': { 
-    welcome: 'Welcome to VyaparSetu', explore: 'Explore Services', listBiz: 'List My Business', 
-    home: 'Home', feed: 'Feed', chat: 'Chat', profile: 'Profile', 
-    insights: 'Insights', listings: 'Listings', leads: 'Leads', logout: 'Log Out'
-  },
-  'ગુજરાતી': { 
-    welcome: 'વ્યાપારસેતુ માં સ્વાગત છે', explore: 'સેવાઓ શોધો', listBiz: 'મારો વ્યાપાર ઉમેરો', 
-    home: 'હોમ', feed: 'અપડેટ્સ', chat: 'ચેટ', profile: 'પ્રોફાઇલ', 
-    insights: 'માહિતી', listings: 'યાદી', leads: 'ગ્રાહકો', logout: 'બહાર નીકળો'
-  },
-  'हिन्दी': { 
-    welcome: 'व्यापारसेतु में आपका स्वागत है', explore: 'सेवाएं खोजें', listBiz: 'मेरा व्यापार जोड़ें', 
-    home: 'होम', feed: 'फ़ीड', chat: 'चैट', profile: 'प्रोफ़ाइल', 
-    insights: 'जानकारी', listings: 'सूची', leads: 'ग्राहक', logout: 'लॉग आउट'
-  }
+  'English': { welcome: 'Welcome to VyaparSetu', explore: 'Explore Services', listBiz: 'List My Business', home: 'Home', feed: 'Feed', chat: 'Chat', profile: 'Profile', insights: 'Insights', listings: 'Listings', leads: 'Leads', logout: 'Log Out' },
+  'ગુજરાતી': { welcome: 'વ્યાપારસેતુ માં સ્વાગત છે', explore: 'સેવાઓ શોધો', listBiz: 'મારો વ્યાપાર ઉમેરો', home: 'હોમ', feed: 'અપડેટ્સ', chat: 'ચેટ', profile: 'પ્રોફાઇલ', insights: 'માહિતી', listings: 'યાદી', leads: 'ગ્રાહકો', logout: 'બહાર નીકળો' },
+  'हिन्दी': { welcome: 'व्यापारसेतु में आपका स्वागत है', explore: 'सेवाएं खोजें', listBiz: 'मेरा व्यापार जोड़ें', home: 'होम', feed: 'फ़ीड', chat: 'चैट', profile: 'प्रोफ़ाइल', insights: 'जानकारी', listings: 'सूची', leads: 'ग्राहक', logout: 'लॉग आउट' }
 };
 
 function App() {
   const [step, setStep] = useState('splash')
   const [appLanguage, setAppLanguage] = useState('English')
-  
-  // Clerk nu asali User object
   const { isSignedIn, isLoaded } = useUser();
 
   useEffect(() => {
     if (step === 'splash' && isLoaded) {
       setTimeout(() => {
-        if (isSignedIn) {
-          setStep('role-select'); // Already login chhe to sidha andar!
-        } else {
-          setStep('onboarding');
-        }
+        if (isSignedIn) setStep('role-select'); 
+        else setStep('onboarding');
       }, 2500);
     }
   }, [step, isSignedIn, isLoaded]);
 
   useEffect(() => {
-    // Jo Modal mathi login thay to automatic aagal vadhe
-    if (isSignedIn && step === 'login') {
-      setStep('role-select');
-    }
+    if (isSignedIn && step === 'login') setStep('role-select');
   }, [isSignedIn, step]);
 
   return (
@@ -63,8 +61,7 @@ function App() {
 function SplashScreen() {
   return (
     <div className="screen center splash-bg">
-      <h1 className="logo-text">VyaparSetu</h1>
-      <p className="tagline">Local Market. Direct Chat.</p>
+      <h1 className="logo-text">VyaparSetu</h1><p className="tagline">Local Market. Direct Chat.</p>
     </div>
   )
 }
@@ -73,32 +70,19 @@ function Onboarding({ onNext, language, setLanguage }) {
   const t = translations[language];
   return (
     <div className="screen">
-      <h2 className="title">{t.welcome}</h2>
-      <p className="subtitle">Discover local services & deals directly</p>
-      <div className="form-group mt-15">
-        <label>Select Language</label>
-        <select className="input-box" value={language} onChange={(e) => setLanguage(e.target.value)}>
-          <option value="English">English</option><option value="ગુજરાતી">ગુજરાતી</option><option value="हिन्दी">हिन्दी</option>
-        </select>
-      </div>
+      <h2 className="title">{t.welcome}</h2><p className="subtitle">Discover local services & deals directly</p>
+      <div className="form-group mt-15"><label>Select Language</label><select className="input-box" value={language} onChange={(e) => setLanguage(e.target.value)}><option value="English">English</option><option value="ગુજરાતી">ગુજરાતી</option><option value="हिन्दी">हिन्दी</option></select></div>
       <div className="form-group mt-15"><label>Your Location</label><button className="btn-location" onClick={() => alert('Rajkot, Gujarat detected!')}>📍 Auto-Detect My Location</button></div>
       <div className="spacer"></div><button className="btn-primary" onClick={onNext}>Continue ➔</button>
     </div>
   )
 }
 
-// REAL CLERK LOGIN SCREEN
 function LoginScreen() {
   return (
     <div className="screen center-content">
-      <h2 className="title">Login / Sign Up</h2>
-      <p style={{color: '#666', marginBottom: '30px'}}>Secure authentication</p>
-      
-      <SignInButton mode="modal">
-        <button className="btn-google" style={{fontSize: '1.1rem', padding: '15px'}}>
-          🌐 Continue with Google / Email
-        </button>
-      </SignInButton>
+      <h2 className="title">Login / Sign Up</h2><p style={{color: '#666', marginBottom: '30px'}}>Secure authentication</p>
+      <SignInButton mode="modal"><button className="btn-google" style={{fontSize: '1.1rem', padding: '15px'}}>🌐 Continue with Google / Email</button></SignInButton>
     </div>
   )
 }
@@ -119,6 +103,7 @@ function BuyerDashboard({ language, setLanguage }) {
   const [activeChatUser, setActiveChatUser] = useState(null)
   const [stores, setStores] = useState([])
   const [selectedStore, setSelectedStore] = useState(null) 
+  const [userLocation, setUserLocation] = useState('Rajkot, Gujarat') 
   const t = translations[language];
 
   useEffect(() => {
@@ -135,28 +120,29 @@ function BuyerDashboard({ language, setLanguage }) {
 
   return (
     <div className="dashboard">
-      {activeTab === 'home' && <HomeTab stores={stores} onVisit={setSelectedStore} />}
+      {activeTab === 'home' && <HomeTab stores={stores} onVisit={setSelectedStore} userLocation={userLocation} setUserLocation={setUserLocation} />}
       {activeTab === 'feed' && <FeedTab language={language} />}
       {activeTab === 'chat' && !activeChatUser && <ChatListTab onOpenChat={setActiveChatUser} language={language} />}
       {activeTab === 'profile' && <UserProfileTab language={language} setLanguage={setLanguage} />} 
-
       {activeChatUser && <ChatThreadScreen user={activeChatUser} onClose={() => setActiveChatUser(null)} />}
 
       <div className="bottom-nav">
         <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>🏠<br/><span>{t.home}</span></div>
         <div className={`nav-item ${activeTab === 'feed' ? 'active' : ''}`} onClick={() => setActiveTab('feed')}>📰<br/><span>{t.feed}</span></div>
-        <div className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => {setActiveTab('chat'); setActiveChatUser(null);}}>
-          <div className="nav-icon-wrapper">💬<span className="nav-badge">1</span></div><span>{t.chat}</span>
-        </div>
+        <div className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => {setActiveTab('chat'); setActiveChatUser(null);}}><div className="nav-icon-wrapper">💬<span className="nav-badge">1</span></div><span>{t.chat}</span></div>
         <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>👤<br/><span>{t.profile}</span></div>
       </div>
     </div>
   )
 }
 
-function HomeTab({ stores, onVisit }) {
+function HomeTab({ stores, onVisit, userLocation, setUserLocation }) {
   const [searchText, setSearchText] = useState('')
   const [activeCategory, setActiveCategory] = useState('All') 
+  
+  // Modal States
+  const [showLocModal, setShowLocModal] = useState(false);
+  const [citySearch, setCitySearch] = useState('');
 
   const categories = [
     { id: 'All', icon: '🌐' }, { id: 'Grocery', icon: '🛍️' }, { id: 'Health', icon: '🏥' },
@@ -169,14 +155,52 @@ function HomeTab({ stores, onVisit }) {
     return matchSearch && matchCategory;
   });
 
+  const filteredCities = INDIA_CITIES.filter(city => city.toLowerCase().includes(citySearch.toLowerCase()));
+
   return (
     <>
+      {/* City Selection Modal / Popup */}
+      {showLocModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,128,128,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', padding: '20px', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', marginTop: '20px' }}>
+            <h2 style={{ margin: 0, color: 'white' }}>Select City</h2>
+            <button onClick={() => setShowLocModal(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem' }}>✖</button>
+          </div>
+          <input 
+            type="text" 
+            className="input-box" 
+            placeholder="Type your city name..." 
+            value={citySearch} 
+            onChange={(e) => setCitySearch(e.target.value)} 
+            style={{ marginBottom: '15px' }}
+            autoFocus
+          />
+          <div style={{ background: 'white', borderRadius: '12px', flex: 1, overflowY: 'auto', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+            {filteredCities.map(city => (
+              <div 
+                key={city} 
+                onClick={() => { setUserLocation(city); setShowLocModal(false); setCitySearch(''); }}
+                style={{ padding: '15px 20px', borderBottom: '1px solid #eee', cursor: 'pointer', fontSize: '1.1rem', color: '#333' }}
+              >
+                📍 {city}
+              </div>
+            ))}
+            {filteredCities.length === 0 && <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>No cities found</div>}
+          </div>
+        </div>
+      )}
+
       <div className="dash-header">
-        <div className="location-bar"><span className="loc-text">📍 Rajkot, Gujarat ▾</span><UserButton /></div>
+        <div className="location-bar">
+          <span className="loc-text" onClick={() => setShowLocModal(true)} style={{cursor: 'pointer', padding: '5px 10px', borderRadius: '8px', background: 'rgba(255,255,255,0.2)'}}>
+            📍 {userLocation.split(',')[0]} ▾
+          </span>
+          <UserButton />
+        </div>
         <div className="search-bar-container"><input type="text" className="search-bar" placeholder="Search shops, flats, tutors..." value={searchText} onChange={(e) => setSearchText(e.target.value)} /></div>
       </div>
       <div className="dash-content">
-        <div className="promo-banner"><h3>🔥 Hot Leads in Your Area</h3><p>Find the best local services!</p></div>
+        <div className="promo-banner"><h3>🔥 Hot Leads in {userLocation.split(',')[0]}</h3><p>Find the best local services!</p></div>
         
         <h3 className="section-title mt-20">Filter by Category</h3>
         <div style={{display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px', paddingTop: '5px'}}>
@@ -187,7 +211,7 @@ function HomeTab({ stores, onVisit }) {
           ))}
         </div>
 
-        <div className="feed-header mt-15"><h3 className="section-title">{activeCategory === 'All' ? 'Local Businesses Near Me' : `${activeCategory} Near Me`}</h3></div>
+        <div className="feed-header mt-15"><h3 className="section-title">{activeCategory === 'All' ? `Local Businesses in ${userLocation.split(',')[0]}` : `${activeCategory} Near Me`}</h3></div>
         
         {filteredStores.map(store => (
           <div className="store-card" key={store.id}>
@@ -272,7 +296,6 @@ function ChatThreadScreen({ user, onClose }) {
   )
 }
 
-// REAL USER PROFILE SECTION
 function UserProfileTab({ language, setLanguage }) {
   const t = translations[language];
   const [notificationsOn, setNotificationsOn] = useState(true);
