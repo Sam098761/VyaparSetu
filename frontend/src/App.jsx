@@ -4,7 +4,6 @@ import './App.css'
 
 const API_URL = 'https://vyaparsetu-jsu1.onrender.com';
 
-// 📍 All Over India Major Cities List
 const INDIA_CITIES = [
   "Agra, UP", "Ahmedabad, Gujarat", "Amritsar, Punjab", "Bangalore, Karnataka",
   "Bhavnagar, Gujarat", "Bhopal, MP", "Bhubaneswar, Odisha", "Chandigarh",
@@ -110,9 +109,19 @@ function BuyerDashboard({ language, setLanguage }) {
     fetch(`${API_URL}/api/stores`).then(res => res.json()).then(data => setStores(data)).catch(err => console.error(err));
   }, [])
 
+  // 💬 Asali Chat Inquire Function
   const handleInquire = (item, store) => {
+    if(!item.sellerId) {
+       alert("Aa juno demo product chhe! Navi asali item add kari ne test karo.");
+       return;
+    }
     setSelectedStore(null); 
-    setActiveChatUser({ name: store.name, icon: '🏪', status: 'Online', initialMsg: `Hi, I want to inquire about "${item.name}" (₹${item.price})` });
+    setActiveChatUser({ 
+      id: item.sellerId,              // Real Seller ID
+      name: item.sellerName || "Seller", 
+      status: 'Online', 
+      initialMsg: `Hi, I want to inquire about "${item.name}" (₹${item.price})` 
+    });
     setActiveTab('chat'); 
   };
 
@@ -122,14 +131,20 @@ function BuyerDashboard({ language, setLanguage }) {
     <div className="dashboard">
       {activeTab === 'home' && <HomeTab stores={stores} onVisit={setSelectedStore} userLocation={userLocation} setUserLocation={setUserLocation} />}
       {activeTab === 'feed' && <FeedTab language={language} />}
-      {activeTab === 'chat' && !activeChatUser && <ChatListTab onOpenChat={setActiveChatUser} language={language} />}
+      {activeTab === 'chat' && !activeChatUser && (
+        <div className="dash-content mt-20" style={{textAlign:'center', padding:'20px'}}>
+          <h3 style={{color:'#008080'}}>💬 Buyer Chats</h3>
+          <p style={{color:'#666'}}>Browse stores and click "Inquire" to start a real chat with a seller!</p>
+        </div>
+      )}
       {activeTab === 'profile' && <UserProfileTab language={language} setLanguage={setLanguage} />} 
-      {activeChatUser && <ChatThreadScreen user={activeChatUser} onClose={() => setActiveChatUser(null)} />}
+      
+      {activeChatUser && <ChatThreadScreen chatUser={activeChatUser} onClose={() => setActiveChatUser(null)} />}
 
       <div className="bottom-nav">
         <div className={`nav-item ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>🏠<br/><span>{t.home}</span></div>
         <div className={`nav-item ${activeTab === 'feed' ? 'active' : ''}`} onClick={() => setActiveTab('feed')}>📰<br/><span>{t.feed}</span></div>
-        <div className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => {setActiveTab('chat'); setActiveChatUser(null);}}><div className="nav-icon-wrapper">💬<span className="nav-badge">1</span></div><span>{t.chat}</span></div>
+        <div className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => {setActiveTab('chat'); setActiveChatUser(null);}}><div className="nav-icon-wrapper">💬</div><span>{t.chat}</span></div>
         <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>👤<br/><span>{t.profile}</span></div>
       </div>
     </div>
@@ -139,7 +154,6 @@ function BuyerDashboard({ language, setLanguage }) {
 function HomeTab({ stores, onVisit, userLocation, setUserLocation }) {
   const [searchText, setSearchText] = useState('')
   const [activeCategory, setActiveCategory] = useState('All') 
-  
   const [showLocModal, setShowLocModal] = useState(false);
   const [citySearch, setCitySearch] = useState('');
 
@@ -160,51 +174,26 @@ function HomeTab({ stores, onVisit, userLocation, setUserLocation }) {
     <>
       {showLocModal && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,128,128,0.95)', zIndex: 9999, display: 'flex', flexDirection: 'column', padding: '20px', boxSizing: 'border-box' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', marginTop: '20px' }}>
-            <h2 style={{ margin: 0, color: 'white' }}>Select City</h2>
-            <button onClick={() => setShowLocModal(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem' }}>✖</button>
-          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', marginTop: '20px' }}><h2 style={{ margin: 0, color: 'white' }}>Select City</h2><button onClick={() => setShowLocModal(false)} style={{ background: 'transparent', border: 'none', color: 'white', fontSize: '1.5rem' }}>✖</button></div>
           <input type="text" className="input-box" placeholder="Type your city name..." value={citySearch} onChange={(e) => setCitySearch(e.target.value)} style={{ marginBottom: '15px' }} autoFocus />
           <div style={{ background: 'white', borderRadius: '12px', flex: 1, overflowY: 'auto', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
-            {filteredCities.map(city => (
-              <div key={city} onClick={() => { setUserLocation(city); setShowLocModal(false); setCitySearch(''); }} style={{ padding: '15px 20px', borderBottom: '1px solid #eee', cursor: 'pointer', fontSize: '1.1rem', color: '#333' }}>
-                📍 {city}
-              </div>
-            ))}
-            {filteredCities.length === 0 && <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>No cities found</div>}
+            {filteredCities.map(city => (<div key={city} onClick={() => { setUserLocation(city); setShowLocModal(false); setCitySearch(''); }} style={{ padding: '15px 20px', borderBottom: '1px solid #eee', cursor: 'pointer', fontSize: '1.1rem', color: '#333' }}>📍 {city}</div>))}
           </div>
         </div>
       )}
 
       <div className="dash-header">
-        <div className="location-bar">
-          <span className="loc-text" onClick={() => setShowLocModal(true)} style={{cursor: 'pointer', padding: '5px 10px', borderRadius: '8px', background: 'rgba(255,255,255,0.2)'}}>
-            📍 {userLocation.split(',')[0]} ▾
-          </span>
-          <UserButton />
-        </div>
+        <div className="location-bar"><span className="loc-text" onClick={() => setShowLocModal(true)} style={{cursor: 'pointer', padding: '5px 10px', borderRadius: '8px', background: 'rgba(255,255,255,0.2)'}}>📍 {userLocation.split(',')[0]} ▾</span><UserButton /></div>
         <div className="search-bar-container"><input type="text" className="search-bar" placeholder="Search shops, flats, tutors..." value={searchText} onChange={(e) => setSearchText(e.target.value)} /></div>
       </div>
       <div className="dash-content">
         <div className="promo-banner"><h3>🔥 Hot Leads in {userLocation.split(',')[0]}</h3><p>Find the best local services!</p></div>
-        
         <h3 className="section-title mt-20">Filter by Category</h3>
         <div style={{display: 'flex', gap: '15px', overflowX: 'auto', paddingBottom: '10px', paddingTop: '5px'}}>
-          {categories.map(cat => (
-            <div key={cat.id} onClick={() => setActiveCategory(cat.id)} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '70px', padding: '10px 5px', borderRadius: '12px', background: activeCategory === cat.id ? '#008080' : 'white', color: activeCategory === cat.id ? 'white' : '#333', border: activeCategory === cat.id ? 'none' : '1px solid #ddd', boxShadow: '0 2px 5px rgba(0,0,0,0.05)', cursor: 'pointer'}}>
-              <div style={{fontSize: '1.5rem', marginBottom: '5px'}}>{cat.icon}</div><span style={{fontSize: '0.75rem', fontWeight: activeCategory === cat.id ? 'bold' : 'normal'}}>{cat.id}</span>
-            </div>
-          ))}
+          {categories.map(cat => (<div key={cat.id} onClick={() => setActiveCategory(cat.id)} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '70px', padding: '10px 5px', borderRadius: '12px', background: activeCategory === cat.id ? '#008080' : 'white', color: activeCategory === cat.id ? 'white' : '#333', border: activeCategory === cat.id ? 'none' : '1px solid #ddd', cursor: 'pointer'}}><div style={{fontSize: '1.5rem', marginBottom: '5px'}}>{cat.icon}</div><span style={{fontSize: '0.75rem', fontWeight: activeCategory === cat.id ? 'bold' : 'normal'}}>{cat.id}</span></div>))}
         </div>
-
         <div className="feed-header mt-15"><h3 className="section-title">{activeCategory === 'All' ? `Local Businesses in ${userLocation.split(',')[0]}` : `${activeCategory} Near Me`}</h3></div>
-        
-        {filteredStores.map(store => (
-          <div className="store-card" key={store.id}>
-            <div className="store-info"><h4>{store.name}</h4><p className="store-sub">{store.type} • {store.distance} away</p></div>
-            <button className="btn-small" onClick={() => onVisit(store)}>View Profile</button>
-          </div>
-        ))}
+        {filteredStores.map(store => (<div className="store-card" key={store.id}><div className="store-info"><h4>{store.name}</h4><p className="store-sub">{store.type} • {store.distance} away</p></div><button className="btn-small" onClick={() => onVisit(store)}>View Profile</button></div>))}
         <div className="spacer-bottom"></div>
       </div>
     </>
@@ -218,10 +207,10 @@ function StoreProfileScreen({ store, onBack, onInquire }) {
     <div className="dashboard seller-bg">
       <div className="dash-header" style={{borderRadius: 0, paddingBottom: '15px'}}><button className="back-btn" onClick={onBack}>⬅</button><h2 style={{margin:0, marginLeft:'15px', color:'white'}}>{store.name}</h2></div>
       <div className="dash-content">
-        <h3 className="section-title mt-20">Listings / Services</h3>
+        <h3 className="section-title mt-20">Real Items From Database</h3>
         {shopItems.map(item => (
           <div className="clean-card" key={item._id || item.id}>
-            <div className="card-left"><h4>{item.name}</h4><p className="price">₹{item.price}</p></div>
+            <div className="card-left"><h4>{item.name}</h4><p className="price">₹{item.price}</p><p style={{fontSize:'10px', color:'#888'}}>By: {item.sellerName || 'Unknown'}</p></div>
             <button className="btn-primary" onClick={() => onInquire(item, store)}>💬 Inquire</button>
           </div>
         ))}
@@ -230,139 +219,105 @@ function StoreProfileScreen({ store, onBack, onInquire }) {
   )
 }
 
-function FeedTab({ language }) {
-  const t = translations[language];
-  return (
-    <>
-      <div className="dash-header"><h2 className="brand-title" style={{color: 'white', margin: 0}}>{t.feed} / Updates</h2></div>
-      <div className="dash-content feed-bg">
-        <div className="post-card">
-          <div className="post-header"><div className="post-avatar health-avatar">🏥</div><div className="post-meta"><h4>Dr. Khengar Pandya Clinic</h4><p>2 hours ago</p></div></div>
-          <div className="post-body"><p>Free General Health Checkup camp this Sunday! Direct message us to book your slot.</p></div>
-        </div>
-      </div>
-    </>
-  )
-}
-
-function ChatListTab({ onOpenChat, language }) {
-  const t = translations[language];
-  return (
-    <>
-      <div className="dash-header"><h2 className="brand-title" style={{color: 'white', margin: 0}}>{t.chat} / Messages</h2></div>
-      <div className="dash-content">
-        <div className="chat-item unread" onClick={() => onOpenChat({name: 'Manoj Provisions', icon: '🏪', status: 'Online'})}>
-          <div className="chat-avatar shop-avatar">🏪</div>
-          <div className="chat-details"><h4 className="chat-name">Manoj Provisions</h4><p className="chat-msg">Ha bhai, tiffin chalu chhe atyare.</p></div>
-          <div className="chat-meta"><span className="chat-time">New</span><span className="unread-dot">1</span></div>
-        </div>
-      </div>
-    </>
-  )
-}
-
-function ChatThreadScreen({ user, onClose }) {
-  const [messages, setMessages] = useState(user.initialMsg ? [{ text: user.initialMsg, sender: 'me' }] : [{ text: "Ha bhai, boliye shu joiye chhe?", sender: 'them' }]);
+// 💬 REAL CHAT THREAD COMPONENT 💬
+function ChatThreadScreen({ chatUser, onClose }) {
+  const { user } = useUser();
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
-  const sendMessage = () => { if(!input) return; setMessages([...messages, { text: input, sender: 'me' }]); setInput(''); };
+
+  // Fetch Message History
+  useEffect(() => {
+    if (user && chatUser.id) {
+      fetch(`${API_URL}/api/messages/${user.id}/${chatUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.length === 0 && chatUser.initialMsg) {
+            setMessages([{ text: chatUser.initialMsg, senderId: user.id }]);
+          } else {
+            setMessages(data);
+          }
+        });
+    }
+  }, [user, chatUser]);
+
+  // Send Message API
+  const sendMessage = async () => {
+    if (!input.trim() || !user) return;
+    const newMsg = {
+      senderId: user.id,
+      senderName: user.fullName || "User",
+      receiverId: chatUser.id,
+      text: input
+    };
+    
+    // UI ma tarta j dekhadva (Optimistic update)
+    setMessages([...messages, newMsg]);
+    setInput('');
+
+    // Backend ma moklavu
+    await fetch(`${API_URL}/api/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newMsg)
+    });
+  };
 
   return (
     <div className="chat-screen-overlay">
-      <div className="chat-thread-header"><button className="back-btn" onClick={onClose}>⬅</button><div><h4>{user.name}</h4><p style={{fontSize:'12px', margin:0}}>{user.status}</p></div></div>
+      <div className="chat-thread-header"><button className="back-btn" onClick={onClose}>⬅</button><div><h4>{chatUser.name}</h4><p style={{fontSize:'12px', margin:0}}>{chatUser.status}</p></div></div>
       <div className="chat-thread-messages">
         {messages.map((msg, idx) => (
-          <div key={idx} className={`msg-wrapper ${msg.sender === 'me' ? 'msg-sent' : 'msg-received'}`}><div className="msg-bubble">{msg.text}</div></div>
+          <div key={idx} className={`msg-wrapper ${msg.senderId === user?.id ? 'msg-sent' : 'msg-received'}`}><div className="msg-bubble">{msg.text}</div></div>
         ))}
       </div>
       <div className="chat-input-area">
-        <input type="text" className="chat-input" placeholder="Type a message..." value={input} onChange={(e) => setInput(e.target.value)} />
+        <input type="text" className="chat-input" placeholder="Type your real message..." value={input} onChange={(e) => setInput(e.target.value)} />
         <button className="chat-send-btn" onClick={sendMessage}>➤</button>
       </div>
     </div>
   )
 }
 
-function UserProfileTab({ language, setLanguage }) {
-  const t = translations[language];
-  const [notificationsOn, setNotificationsOn] = useState(true);
-  const { user } = useUser();
-  const { signOut } = useClerk();
-
-  const toggleLanguage = () => {
-    const langs = ['English', 'ગુજરાતી', 'हिन्दी'];
-    setLanguage(langs[(langs.indexOf(language) + 1) % langs.length]);
-  };
-
-  return (
-    <>
-      <div className="dash-header"><h2 className="brand-title" style={{color: 'white', margin: 0}}>{t.profile}</h2></div>
-      <div className="dash-content">
-        <div className="clean-card mt-20" style={{textAlign: 'center', background: 'linear-gradient(to bottom, #e8f4f4, #ffffff)', border: 'none'}}>
-          <div style={{margin: '10px 0', display: 'flex', justifyContent: 'center'}}>
-             <UserButton appearance={{ elements: { userButtonAvatarBox: { width: 80, height: 80 } } }} />
-          </div>
-          <h2 style={{margin: '0', color: '#008080'}}>{user?.fullName || 'VyaparSetu User'}</h2>
-          <p style={{color: '#666', marginTop: '5px'}}>{user?.primaryEmailAddress?.emailAddress}</p>
-        </div>
-        <h3 className="section-title mt-20">App Settings</h3>
-        <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', cursor: 'pointer', background: '#fcfcfc'}} onClick={toggleLanguage}>
-          <h4 style={{margin: 0}}>🌍 Language</h4><span style={{color: '#008080', fontWeight: 'bold'}}>{language}</span>
-        </div>
-        <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', cursor: 'pointer', background: '#fcfcfc', marginTop: '10px'}} onClick={() => setNotificationsOn(!notificationsOn)}>
-          <h4 style={{margin: 0}}>🔔 Notifications</h4><span style={{color: notificationsOn ? '#008080' : '#888', fontWeight: 'bold'}}>{notificationsOn ? 'ON' : 'OFF'}</span>
-        </div>
-        <div className="clean-card mt-20" onClick={() => signOut(() => window.location.reload())} style={{border: '1px solid #ff4444', background: '#ffeeee', cursor: 'pointer'}}>
-          <h4 style={{color: '#ff4444', textAlign: 'center', margin: 0}}>{t.logout}</h4>
-        </div>
-        <div className="spacer-bottom"></div>
-      </div>
-    </>
-  )
-}
-
 function SellerDashboard({ language, setLanguage }) {
   const [activeTab, setActiveTab] = useState('dash') 
   const [products, setProducts] = useState([]);
+  const [leads, setLeads] = useState([]); // Real Chat Leads State
+  const [activeChatUser, setActiveChatUser] = useState(null); // Active Chat state
   const [showAddForm, setShowAddForm] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
-  const t = translations[language];
   
-  // 🔐 User Data from Clerk
+  const t = translations[language];
   const { user } = useUser();
   const { signOut } = useClerk();
 
-  // 📥 Fetch ONLY this seller's products using their Clerk ID
+  // Load Products & Chat Leads
   useEffect(() => {
     if (user) {
+      // Load Products
       fetch(`${API_URL}/api/products/seller/${user.id}`)
         .then(res => res.json())
-        .then(data => setProducts(data))
-        .catch(err => console.error(err));
+        .then(data => setProducts(data));
+      
+      // Load Real Leads from DB
+      if(activeTab === 'chat'){
+        fetch(`${API_URL}/api/chats/${user.id}`)
+          .then(res => res.json())
+          .then(data => setLeads(data));
+      }
     }
-  }, [user]);
+  }, [user, activeTab]);
 
-  // 📤 Add Product with Clerk ID attached
   const handleAddItem = (e) => {
     e.preventDefault();
-    if (!newItemName || !newItemPrice) return alert("Item Name and Price nakhva jaruri chhe!");
-    if (!user) return alert("User Load thai rahyo chhe, 1 second wait karo...");
-
+    if (!newItemName || !newItemPrice) return;
     fetch(`${API_URL}/api/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        name: newItemName, 
-        price: Number(newItemPrice),
-        sellerId: user.id,                      // ⬅️ Clerk ID
-        sellerName: user.fullName || "Seller"   // ⬅️ Clerk Name
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
+      body: JSON.stringify({ name: newItemName, price: Number(newItemPrice), sellerId: user.id, sellerName: user.fullName || "Seller" })
+    }).then(res => res.json()).then(data => {
       setProducts([...products, data.product]);
       setNewItemName(''); setNewItemPrice(''); setShowAddForm(false);
-      alert("✅ Listing added successfully to Cloud!");
     });
   };
 
@@ -372,62 +327,57 @@ function SellerDashboard({ language, setLanguage }) {
       <div className="dash-content">
         
         {activeTab === 'dash' && (
-          <>
-            <div className="stats-container"><div className="stat-box"><h4>850</h4><p>Profile Views</p></div><div className="stat-box highlight"><h4>42</h4><p>New Leads</p></div></div>
-            <div className="clean-card mt-20" style={{background: '#f2fcfc', border: '1px dashed #008080'}}><h4 style={{color:'#008080'}}>Pending Chat Leads (2)</h4><p style={{fontSize:'0.9rem', color:'#555', marginTop:'5px'}}>2 customers are waiting for your reply.</p></div>
-          </>
+          <><div className="stats-container"><div className="stat-box"><h4>850</h4><p>Profile Views</p></div><div className="stat-box highlight"><h4>{leads.length}</h4><p>Real Leads</p></div></div></>
         )}
 
         {activeTab === 'catalog' && (
           <>
             <div className="feed-header"><h3 className="section-title">My Portfolio Listings</h3></div>
             {showAddForm ? (
-              <div className="clean-card mb-20" style={{background: '#ffffff', border: '2px solid #008080'}}>
-                <h4 style={{color: '#008080', marginBottom: '10px'}}>Add New Listing / Service</h4>
-                <input type="text" placeholder="e.g. 2BHK Flat / 10th Bio Coaching" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="input-box" style={{marginBottom: '10px'}} />
-                <input type="number" placeholder="Asking Price / Fees (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="input-box" />
-                <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}><button className="btn-primary" onClick={handleAddItem} style={{flex: 1}}>Publish</button><button className="btn-small" onClick={() => setShowAddForm(false)}>Cancel</button></div>
-              </div>
+              <div className="clean-card mb-20" style={{background: '#ffffff', border: '2px solid #008080'}}><input type="text" placeholder="Item Name" value={newItemName} onChange={(e) => setNewItemName(e.target.value)} className="input-box" style={{marginBottom: '10px'}} /><input type="number" placeholder="Price (₹)" value={newItemPrice} onChange={(e) => setNewItemPrice(e.target.value)} className="input-box" /><div style={{display: 'flex', gap: '10px', marginTop: '15px'}}><button className="btn-primary" onClick={handleAddItem} style={{flex: 1}}>Publish</button><button className="btn-small" onClick={() => setShowAddForm(false)}>Cancel</button></div></div>
             ) : (<button className="btn-primary mb-20" onClick={() => setShowAddForm(true)}>➕ Add New Listing</button>)}
             {products.map(product => (<div className="clean-card" key={product._id || product.id}><div className="card-left"><h4>{product.name}</h4><p className="price">₹{product.price}</p></div></div>))}
           </>
         )}
 
-        {activeTab === 'chat' && (
+        {/* REAL LEADS SECTION */}
+        {activeTab === 'chat' && !activeChatUser && (
           <>
-            <div className="feed-header"><h3 className="section-title">Lead Messages</h3></div>
-            <div className="chat-item unread"><div className="chat-avatar" style={{background:'#e8f4fd'}}>👤</div><div className="chat-details"><h4 className="chat-name">Rahul Sharma</h4><p className="chat-msg">Hi, I want to inquire about the flat...</p></div><div className="chat-meta"><span className="chat-time">New</span><span className="unread-dot">1</span></div></div>
+            <div className="feed-header"><h3 className="section-title">Real Customer Inquiries</h3></div>
+            {leads.length === 0 ? (
+              <p style={{textAlign:'center', color:'#888', marginTop:'20px'}}>No real messages yet. Go to Buyer mode, inquire on your product, and it will appear here!</p>
+            ) : (
+              leads.map((lead, idx) => (
+                <div key={idx} className="chat-item unread" onClick={() => setActiveChatUser({id: lead.senderId, name: lead.senderName, status: 'Online'})}>
+                  <div className="chat-avatar" style={{background:'#e8f4fd'}}>👤</div>
+                  <div className="chat-details"><h4 className="chat-name">{lead.senderName}</h4><p className="chat-msg">{lead.lastMessage}</p></div>
+                  <div className="chat-meta"><span className="chat-time">New</span></div>
+                </div>
+              ))
+            )}
           </>
         )}
 
+        {/* SELLER SIDE CHAT THREAD */}
+        {activeChatUser && <ChatThreadScreen chatUser={activeChatUser} onClose={() => setActiveChatUser(null)} />}
+
         {activeTab === 'profile' && (
-          <>
-            <div className="feed-header"><h3 className="section-title">Business Profile</h3></div>
-            <div className="clean-card mt-10" style={{textAlign: 'center', background: '#f9fafa', border: '2px solid #008080'}}>
-              <div style={{margin: '10px 0', display: 'flex', justifyContent: 'center'}}>
-                 <UserButton appearance={{ elements: { userButtonAvatarBox: { width: 80, height: 80 } } }} />
-              </div>
-              <h2 style={{margin: '0', color: '#008080'}}>{user?.fullName || 'Business User'} <span style={{fontSize:'1rem'}}>✅</span></h2>
-              <p style={{color: '#666', marginTop: '5px'}}>{user?.primaryEmailAddress?.emailAddress}</p>
-            </div>
-            <h3 className="section-title mt-20">Account Settings</h3>
-            <div className="clean-card" style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}><div><h4 style={{margin: 0}}>🚀 Subscription</h4><p style={{margin: 0, fontSize: '0.8rem', color: '#888'}}>Free Plan</p></div><button className="btn-small" style={{background: '#ff9800', color: 'white', border: 'none'}}>Upgrade</button></div>
-            <div className="clean-card mt-20" onClick={() => signOut(() => window.location.reload())} style={{border: '1px solid #ff4444', background: '#ffeeee', cursor: 'pointer'}}>
-              <h4 style={{color: '#ff4444', textAlign: 'center', margin: 0}}>{t.logout}</h4>
-            </div>
-          </>
+           <div className="clean-card mt-20" onClick={() => signOut(() => window.location.reload())} style={{border: '1px solid #ff4444', background: '#ffeeee', cursor: 'pointer'}}><h4 style={{color: '#ff4444', textAlign: 'center', margin: 0}}>{t.logout}</h4></div>
         )}
         <div className="spacer-bottom"></div>
       </div>
 
       <div className="bottom-nav">
-        <div className={`nav-item ${activeTab === 'dash' ? 'active' : ''}`} onClick={() => setActiveTab('dash')}>📊<br/><span>{t.insights}</span></div>
-        <div className={`nav-item ${activeTab === 'catalog' ? 'active' : ''}`} onClick={() => setActiveTab('catalog')}>📋<br/><span>{t.listings}</span></div>
+        <div className={`nav-item ${activeTab === 'dash' ? 'active' : ''}`} onClick={() => {setActiveTab('dash'); setActiveChatUser(null);}}>📊<br/><span>{t.insights}</span></div>
+        <div className={`nav-item ${activeTab === 'catalog' ? 'active' : ''}`} onClick={() => {setActiveTab('catalog'); setActiveChatUser(null);}}>📋<br/><span>{t.listings}</span></div>
         <div className={`nav-item ${activeTab === 'chat' ? 'active' : ''}`} onClick={() => setActiveTab('chat')}>💬<br/><span>{t.leads}</span></div>
-        <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>⚙️<br/><span>{t.profile}</span></div>
+        <div className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => {setActiveTab('profile'); setActiveChatUser(null);}}>⚙️<br/><span>{t.profile}</span></div>
       </div>
     </div>
   )
 }
+
+function FeedTab() { return <div className="dash-header"><h2 className="brand-title" style={{color: 'white', margin: 0}}>Updates</h2></div>; }
+function UserProfileTab() { return <div className="dash-header"><h2 className="brand-title" style={{color: 'white', margin: 0}}>Profile</h2></div>; }
 
 export default App
